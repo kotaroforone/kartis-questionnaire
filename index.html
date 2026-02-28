@@ -468,7 +468,25 @@
       <textarea name="other" id="other" placeholder="上記以外に伝えたいこと、ご不明な点などあればご自由にご記入ください…"></textarea>
     </div>
 
-    <div class="submit-area">
+    
+<!-- 共有確認モーダル -->
+<div id="shareModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:36px 32px;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.2);">
+    <div style="font-size:2rem;margin-bottom:12px;">📋</div>
+    <h3 style="font-size:1.15rem;margin-bottom:12px;color:#222;">回答内容の共有について</h3>
+    <p style="font-size:0.93rem;color:#555;line-height:1.7;margin-bottom:24px;">
+      ご回答いただいた内容を、フォーワン税理士事務所のチームメンバーと共有してもよろしいでしょうか？<br>
+      <span style="font-size:0.85rem;color:#888;">今後のご提案の精度向上に活用させていただきます。</span>
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onclick="doSubmit(true)"  style="padding:12px;background:#4a90d9;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:bold;">✅ はい、共有してもよいです</button>
+      <button onclick="doSubmit(false)" style="padding:12px;background:#6c757d;color:white;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">🚫 いいえ、共有しない</button>
+      <button onclick="closeModal()"   style="padding:12px;background:#fff;color:#555;border:1px solid #ccc;border-radius:8px;font-size:0.95rem;cursor:pointer;">✏️ まだ記載します（戻る）</button>
+    </div>
+  </div>
+</div>
+
+<div class="submit-area">
       <button type="submit" class="submit-btn" id="submitBtn">回答を送信する</button>
       <div id="statusMsg" class="status-msg"></div>
     </div>
@@ -476,7 +494,7 @@
   </form>
 </div>
 
-<div class="thank-you" id="thankYou">
+<div class="thank-you" id="thankYou" style="display:none;">
   <div class="check-icon">✅</div>
   <h2>ご回答ありがとうございました</h2>
   <p>内容を受け取りました。担当者より改めてご連絡いたします。</p>
@@ -484,150 +502,236 @@
 
 <script>
 // ============================================================
-// ⚙️ EmailJS 設定（GitHub Pages公開前に必ず変更してください）
-// 設定手順：
-// 1. https://www.emailjs.com/ にアクセスし、無料アカウント作成
-// 2. Email Services → Add New Service → Gmail を選択
-//    → Service ID をコピー（例: service_xxxxxxx）
-// 3. Email Templates → Create New Template
-//    → 件名: 「{{subject}}」
-//    → 本文: 「{{message}}」
-//    → Template ID をコピー（例: template_xxxxxxx）
-// 4. Account → Public Key をコピー
+// EmailJS 設定
 // ============================================================
 const EMAILJS_PUBLIC_KEY  = "uc44B1uSud4tqE5Lx";
 const EMAILJS_SERVICE_ID  = "service_4panwf6";
 const EMAILJS_TEMPLATE_ID = "template_i5gfe2q";
-const RECIPIENT_EMAIL     = "your-email@gmail.com"; // ← あなたのGmailアドレス
 // ============================================================
 
-(function() {
-  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-})();
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
 // 今日の日付を自動入力
 document.getElementById('r_date').value = new Date().toLocaleDateString('ja-JP');
 
 // プログレスバー
-const textareas = document.querySelectorAll('textarea, input[type="text"], select');
+const allInputs = document.querySelectorAll('textarea, input[type="text"], select');
 function updateProgress() {
   let filled = 0;
-  textareas.forEach(el => { if (el.value.trim()) filled++; });
-  const pct = Math.round((filled / textareas.length) * 100);
+  allInputs.forEach(el => { if (el.value.trim()) filled++; });
+  const pct = Math.round((filled / allInputs.length) * 100);
   document.getElementById('progressBar').style.width = pct + '%';
 }
-textareas.forEach(el => el.addEventListener('input', updateProgress));
-textareas.forEach(el => el.addEventListener('change', updateProgress));
+allInputs.forEach(el => el.addEventListener('input', updateProgress));
+allInputs.forEach(el => el.addEventListener('change', updateProgress));
 updateProgress();
 
-// フォーム送信
+// ヘルパー関数
+const get = id => (document.getElementById(id) ? document.getElementById(id).value.trim() : '');
+const getN = name => {
+  const el = document.querySelector('[name="' + name + '"]');
+  return el ? el.value.trim() : '';
+};
+
+// フォーム送信 → モーダル表示
 document.getElementById('kartisForm').addEventListener('submit', function(e) {
   e.preventDefault();
-
-  const name = document.getElementById('r_name').value.trim();
+  const name = get('r_name');
   if (!name) {
     alert('お名前をご記入ください。');
     document.getElementById('r_name').focus();
     return;
   }
+  // モーダルを表示
+  const modal = document.getElementById('shareModal');
+  modal.style.display = 'flex';
+});
+
+// モーダル「まだ記載します」→ 閉じる
+function closeModal() {
+  document.getElementById('shareModal').style.display = 'none';
+}
+
+// モーダル「はい/いいえ」→ 実際に送信
+function doSubmit(shareAgreed) {
+  document.getElementById('shareModal').style.display = 'none';
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = '送信中…';
 
-  // フォームデータを集約
-  const get = id => (document.getElementById(id) ? document.getElementById(id).value.trim() : '');
-  const getByName = n => {
-    const el = document.querySelector(`[name="${n}"]`);
-    return el ? el.value.trim() : '';
-  };
+  const shareText = shareAgreed ? '✅ 共有に同意' : '🚫 共有しない';
 
-  const body = `
-K.A.R.T.I.S. 商談確認事項 - K社向け回答
-==========================================
-回答者: ${get('r_name')}
-会社・部署: ${get('r_company')}
-メール: ${get('r_email')}
-回答日: ${get('r_date')}
-
-A. スコープ確認
---------------
-[A-3] J社のシステム利用:
-${get('a3') || '（未回答）'}
-
-[A-4] システムのスコープ:
-${get('a4') || '（未回答）'}
-
-B. 業務フロー詳細
---------------
-[B-1] K社と全米販の関係:
-${get('b1') || '（未回答）'}
-
-[B-2] お米券の「ID」:
-${get('b2') || '（未回答）'}
-
-[B-3] 精算単価と券の種類:
-${get('b3') || '（未回答）'}
-
-[B-4] 二重利用防止と物理券:
-${get('b4') || '（未回答）'}
-
-[B-5] 申請手段の希望: ${getByName('b5_method') || '（未選択）'}
-${get('b5') || ''}
-
-[B-6] 審査プロセス:
-${get('b6') || '（未回答）'}
-
-[B-7] 精算サイクル: ${get('b7_cycle') || '（未選択）'}
-${get('b7') || ''}
-
-C. 振込メカニズム
---------------
-[C-1] 振込方法のご希望:
-${get('c1') || '（未回答）'}
-
-[C-2] 振込の要件:
-${get('c2') || '（未回答）'}
-
-D. お金まわり
---------------
-[D-1] システム利用料:
-${get('d1') || '（未回答）'}
-
-E. 規模感
---------------
-[E-1] 初期店舗数: ${getByName('e1_start') || '未記入'} / 最大想定: ${getByName('e1_max') || '未記入'}
-${get('e1') || ''}
-
-[E-2] トランザクション量:
-${get('e2') || '（未回答）'}
-
-F. 臨時おこめ券
---------------
-[F-1] 対象範囲: ${get('f1_scope') || '（未選択）'}
-${get('f1') || ''}
-
-[F-2] 流通量の変化:
-${get('f2') || '（未回答）'}
-
-G. その他
---------------
-[G-1] 既存システム・データ:
-${get('g1') || '（未回答）'}
-
-[G-2] ユーザーとサポート:
-${get('g2') || '（未回答）'}
-
-[補足・ご意見]:
-${get('other') || '（なし）'}
-==========================================
-`.trim();
+  const body = [
+    'K.A.R.T.I.S. 商談確認事項 - K社向け回答',
+    '==========================================',
+    '回答者: ' + get('r_name'),
+    '会社・部署: ' + get('r_company'),
+    'メール: ' + get('r_email'),
+    '回答日: ' + get('r_date'),
+    'チーム共有: ' + shareText,
+    '',
+    '==========================================',
+    'A. スコープ確認',
+    '==========================================',
+    '',
+    '[A-3] J社のシステム利用',
+    '質問: K社さんからJ社さんへの請求（建て替え報告）は、このシステム上でやりたいですか？',
+    '     それとも今の方法（メール・紙など）で引き続きやりますか？',
+    '回答:',
+    get('a3') || '（未回答）',
+    '',
+    '[A-4] システムのスコープ',
+    '質問: このシステムでやりたいことは「お米券の精算業務」だけですか？',
+    '     将来的にほかの業務（販売管理、在庫管理など）も載せたいですか？',
+    '回答:',
+    get('a4') || '（未回答）',
+    '',
+    '==========================================',
+    'B. 業務フロー詳細',
+    '==========================================',
+    '',
+    '[B-1] K社と全米販の関係',
+    '質問: K社さんはこの全米販さんの役割を代わりにやるイメージですか？',
+    '     全米販さんとは別の独自の仕組みですか？',
+    '     全米販さんとの契約や連携はどうなっていますか？',
+    '回答:',
+    get('b1') || '（未回答）',
+    '',
+    '[B-2] お米券の「ID」について',
+    '質問: 「このお米券が使われた」というのは、何で識別しますか？',
+    '     枚数だけの管理で大丈夫ですか？',
+    '回答:',
+    get('b2') || '（未回答）',
+    '',
+    '[B-3] 精算単価と券の種類',
+    '質問: お米券の精算時の計算単価はいくらですか？（440円？500円？）',
+    '     昔のお米券（440円/520円/540円など）も対象になりますか？',
+    '     端数が出た場合はどう扱いますか？',
+    '回答:',
+    get('b3') || '（未回答）',
+    '',
+    '[B-4] 二重利用防止と物理券',
+    '質問: 同じお米券で2回申請されるのをどう防ぎますか？',
+    '     使い終わったお米券の現物はどうしますか？（K社に送る？写真？データのみ？）',
+    '     偽物のお米券が来たらどう見分けますか？',
+    '回答:',
+    get('b4') || '（未回答）',
+    '',
+    '[B-5] 小売店からの申請方法',
+    '質問: 今、小売店さんはどうやって精算の申請をしていますか？',
+    '     申請に最低限必要な情報は何ですか？',
+    '     申請手段のご希望は？',
+    '申請手段選択: ' + (getN('b5_method') || '（未選択）'),
+    '補足:',
+    get('b5') || '（なし）',
+    '',
+    '[B-6] K社の審査プロセス',
+    '質問: 小売店からの申請を「チェックする」とのことですが、何を見ますか？',
+    '     OKかNGかの判断基準はありますか？',
+    '     チェックにどのくらい時間がかかりますか？',
+    '回答:',
+    get('b6') || '（未回答）',
+    '',
+    '[B-7] 精算サイクル',
+    '質問: 精算はどのくらいの頻度ですか？（毎日？毎週？毎月？）',
+    '     締め日と支払日のルールはありますか？',
+    '頻度選択: ' + (getN('b7_cycle') || '（未選択）'),
+    '補足:',
+    get('b7') || '（なし）',
+    '',
+    '==========================================',
+    'C. 振込メカニズム',
+    '==========================================',
+    '',
+    '[C-1] 振込方法のご希望',
+    '質問: 小売店さんへの振込は、どのような方法で行いたいですか？',
+    '     ご利用予定の銀行や決済サービスは決まっていますか？',
+    '     振込作業はできるだけ自動化・省力化したいですか？',
+    '回答:',
+    get('c1') || '（未回答）',
+    '',
+    '[C-2] 振込の要件',
+    '質問: K社さんの名前で振り込む、という認識で合っていますか？',
+    '     1回に振り込む件数と合計金額の見込みは？',
+    '     振込手数料は誰が負担しますか？',
+    '回答:',
+    get('c2') || '（未回答）',
+    '',
+    '==========================================',
+    'D. お金まわり',
+    '==========================================',
+    '',
+    '[D-1] システム利用料',
+    '質問: J社さんへ請求する「システム利用料」はどうやって計算しますか？',
+    '     （立て替えた金額の○%？固定額？件数ベース？）',
+    '回答:',
+    get('d1') || '（未回答）',
+    '',
+    '==========================================',
+    'E. 規模感・非機能要件',
+    '==========================================',
+    '',
+    '[E-1] 小売店の規模',
+    '質問: 最初は何店舗からスタートしますか？',
+    '     最終的に何店舗くらいを想定していますか？',
+    '初期店舗数: ' + (getN('e1_start') || '（未記入）'),
+    '最大想定店舗数: ' + (getN('e1_max') || '（未記入）'),
+    '補足:',
+    get('e1') || '（なし）',
+    '',
+    '[E-2] トランザクション量',
+    '質問: 月にどのくらいの申請が来そうですか？',
+    '     お中元やお歳暮など、特に多くなる時期はありますか？',
+    '回答:',
+    get('e2') || '（未回答）',
+    '',
+    '==========================================',
+    'F. 経済対策「臨時おこめ券」',
+    '==========================================',
+    '',
+    '[F-1] 臨時券への対応',
+    '質問: 政府の経済対策で使用期限付きのお米券が配られています（期限: 2026/9/30）',
+    '     このシステムは臨時券の精算も対象ですか？',
+    '     通常のお米券（期限なし）と区別して管理しますか？',
+    '対象範囲選択: ' + (getN('f1_scope') || '（未選択）'),
+    '補足:',
+    get('f1') || '（なし）',
+    '',
+    '[F-2] 流通量の変化',
+    '質問: 臨時券で精算が急に増えることが予想されますが、どのくらい増えそうですか？',
+    '     特に期限直前（2026年8〜9月）に集中する可能性があります。',
+    '回答:',
+    get('f2') || '（未回答）',
+    '',
+    '==========================================',
+    'G. その他',
+    '==========================================',
+    '',
+    '[G-1] 既存システム・データ',
+    '質問: K社さんに今使っている業務システムはありますか？',
+    '     小売店さんの情報（店名・口座番号など）のリストは既にありますか？',
+    '     過去の精算実績データはありますか？',
+    '回答:',
+    get('g1') || '（未回答）',
+    '',
+    '[G-2] ユーザーとサポート',
+    '質問: このシステムを操作するのは誰ですか？（K社の担当者？小売店自身？）',
+    '     小売店さんからの問い合わせはK社さんが受ける想定ですか？',
+    '     サポート体制は何名くらいですか？',
+    '回答:',
+    get('g2') || '（未回答）',
+    '',
+    '[補足・ご意見・ご質問]:',
+    get('other') || '（なし）',
+    '',
+    '==========================================',
+  ].join('\n');
 
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-    subject: `【KARTIS商談回答】${get('r_name')} 様より`,
+    subject: '【KARTIS商談回答】' + get('r_name') + ' 様より',
     message: body,
-    to_email: RECIPIENT_EMAIL,
-    reply_to: get('r_email') || RECIPIENT_EMAIL,
+    reply_to: get('r_email') || '',
     from_name: get('r_name')
   })
   .then(function() {
@@ -638,11 +742,11 @@ ${get('other') || '（なし）'}
   .catch(function(err) {
     const msg = document.getElementById('statusMsg');
     msg.className = 'status-msg error';
-    msg.textContent = '送信に失敗しました。ページを再読み込みして再試行してください。（エラー: ' + JSON.stringify(err) + '）';
+    msg.textContent = '送信に失敗しました。再読み込みして再試行してください。（' + JSON.stringify(err) + '）';
     btn.disabled = false;
     btn.textContent = '回答を送信する';
   });
-});
+}
 </script>
 </body>
 </html>
