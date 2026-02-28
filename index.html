@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K.A.R.T.I.S. システム確認事項</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a237e, #283593);
+    color: white;
+    padding: 36px 40px;
+    text-align: center;
+  }
+  .header h1 { margin: 0 0 8px; font-size: 1.8em; letter-spacing: 0.05em; }
+  .header p { margin: 0; font-size: 0.9em; opacity: 0.8; }
+  .container { max-width: 800px; margin: 32px auto; padding: 0 20px 60px; }
+  .intro-box {
+    background: #fff8e1;
+    border-left: 4px solid #f9a825;
+    padding: 16px 20px;
+    border-radius: 4px;
+    margin-bottom: 32px;
+    font-size: 0.9em;
+    line-height: 1.7;
+  }
+  .section-title {
+    font-size: 1.15em;
+    font-weight: bold;
+    color: #1a237e;
+    border-bottom: 3px solid #1a237e;
+    padding-bottom: 8px;
+    margin: 40px 0 20px;
+  }
+  .question-block {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .question-id {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 0.72em;
+    font-weight: bold;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+  .question-label {
+    font-weight: bold;
+    font-size: 1em;
+    margin: 0 0 12px;
+    color: #1a1a2e;
+  }
+  .sub-questions {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+    font-size: 0.85em;
+    color: #555;
+    line-height: 1.8;
+  }
+  .sub-questions li { margin: 0; padding: 0; }
+  textarea, input[type="text"], select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-family: inherit;
+    resize: vertical;
+    transition: border 0.2s;
+    background: #fff;
+  }
+  textarea:focus, input:focus, select:focus {
+    outline: none;
+    border-color: #2a76dd;
+    box-shadow: 0 0 0 3px rgba(42,118,221,0.1);
+  }
+  textarea { min-height: 100px; }
+  .required-mark { color: #c62828; margin-left: 4px; }
+  .note-hint { font-size: 0.78em; color: #888; margin-top: 6px; }
+  .submit-area {
+    text-align: center;
+    margin-top: 40px;
+  }
+  .submit-btn {
+    background: #1a237e;
+    color: white;
+    border: none;
+    padding: 16px 60px;
+    font-size: 1.05em;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .submit-btn:hover { background: #283593; }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+  .status-msg {
+    margin-top: 20px;
+    padding: 14px 20px;
+    border-radius: 6px;
+    font-size: 0.95em;
+    display: none;
+  }
+  .status-msg.success {
+    background: #e8f5e9;
+    border: 1px solid #2e7d32;
+    color: #2e7d32;
+    display: block;
+  }
+  .status-msg.error {
+    background: #ffebee;
+    border: 1px solid #c62828;
+    color: #c62828;
+    display: block;
+  }
+  .respondent-block {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .field-group { display: flex; flex-direction: column; }
+  .field-group label { font-size: 0.85em; font-weight: bold; color: #555; margin-bottom: 6px; }
+  @media (max-width: 600px) {
+    .respondent-block { grid-template-columns: 1fr; }
+    .header { padding: 24px 20px; }
+    .header h1 { font-size: 1.4em; }
+  }
+  .progress-bar-wrap {
+    background: #e8eaf6;
+    border-radius: 4px;
+    height: 6px;
+    margin-top: 12px;
+  }
+  .progress-bar {
+    background: #5c6bc0;
+    height: 6px;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+  .thank-you {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .thank-you .check-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+  }
+  .thank-you h2 { color: #2e7d32; }
+  .thank-you p { color: #555; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>K.A.R.T.I.S. システム確認事項</h1>
+  <p>以下の質問にご回答ください。入力内容は送信時に弊社担当者へ直接届きます。</p>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+</div>
+
+<div class="container" id="formArea">
+  <div class="intro-box">
+    📋 <strong>ご記入のお願い</strong><br>
+    お分かりになる範囲でのご回答で構いません。「未定」「検討中」などのご記入も歓迎します。<br>
+    ご不明な点があれば、フォーム末尾の「その他・補足」にご記入ください。
+  </div>
+
+  <form id="kartisForm" novalidate>
+
+    <!-- 回答者情報 -->
+    <div class="section-title">📌 回答者情報</div>
+    <div class="respondent-block">
+      <div class="field-group">
+        <label>お名前 <span class="required-mark">*</span></label>
+        <input type="text" id="r_name" name="r_name" placeholder="例：山田 太郎" required>
+      </div>
+      <div class="field-group">
+        <label>会社名・部署</label>
+        <input type="text" id="r_company" name="r_company" placeholder="例：K社 営業部">
+      </div>
+      <div class="field-group">
+        <label>メールアドレス</label>
+        <input type="text" id="r_email" name="r_email" placeholder="返信が必要な場合はご記入ください">
+      </div>
+      <div class="field-group">
+        <label>回答日</label>
+        <input type="text" id="r_date" name="r_date" placeholder="自動入力">
+      </div>
+    </div>
+
+    <!-- A. スコープ確認 -->
+    <div class="section-title">A. スコープ確認</div>
+
+    <div class="question-block">
+      <span class="question-id">A-3</span>
+      <p class="question-label">J社のシステム利用</p>
+      <ul class="sub-questions">
+        <li>K社さんからJ社さんへの請求（建て替え報告）は、このシステム上でやりたいですか？</li>
+        <li>それとも今の方法（メール・紙など）で引き続きやりますか？</li>
+      </ul>
+      <textarea name="a3" id="a3" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">A-4</span>
+      <p class="question-label">システムのスコープ</p>
+      <ul class="sub-questions">
+        <li>このシステムでやりたいことは「お米券の精算業務」だけですか？</li>
+        <li>将来的にほかの業務（販売管理、在庫管理など）も載せたいですか？</li>
+      </ul>
+      <textarea name="a4" id="a4" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <!-- B. 業務フロー -->
+    <div class="section-title">B. 業務フロー詳細</div>
+
+    <div class="question-block">
+      <span class="question-id">B-1</span>
+      <p class="question-label">K社と全米販の関係</p>
+      <ul class="sub-questions">
+        <li>K社さんはこの全米販さんの役割を代わりにやるイメージですか？</li>
+        <li>それとも、全米販さんとは別の独自の仕組みですか？</li>
+        <li>全米販さんとの契約や連携はどうなっていますか？</li>
+      </ul>
+      <textarea name="b1" id="b1" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">B-2</span>
+      <p class="question-label">お米券の「ID」について</p>
+      <ul class="sub-questions">
+        <li>「このお米券が使われた」というのは、何で識別しますか？</li>
+        <li>枚数だけの管理で大丈夫ですか？</li>
+      </ul>
+      <textarea name="b2" id="b2" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">B-3</span>
+      <p class="question-label">精算単価と券の種類</p>
+      <ul class="sub-questions">
+        <li>お米券の精算時の計算単価はいくらですか？（440円？500円？）</li>
+        <li>昔のお米券（440円/520円/540円など）も対象になりますか？</li>
+        <li>端数が出た場合はどう扱いますか？</li>
+      </ul>
+      <textarea name="b3" id="b3" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">B-4</span>
+      <p class="question-label">二重利用防止と物理券</p>
+      <ul class="sub-questions">
+        <li>同じお米券で2回申請されるのをどう防ぎますか？</li>
+        <li>使い終わったお米券の現物はどうしますか？（K社に送る？ 写真？ データのみ？）</li>
+        <li>偽物のお米券が来たらどう見分けますか？</li>
+      </ul>
+      <textarea name="b4" id="b4" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">B-5</span>
+      <p class="question-label">小売店からの申請方法</p>
+      <ul class="sub-questions">
+        <li>今、小売店さんはどうやって精算の申請をしていますか？</li>
+        <li>申請に最低限必要な情報は何ですか？（枚数と店舗名だけで足りる？）</li>
+        <li>申請手段のご希望は？</li>
+      </ul>
+      <select name="b5_method" id="b5_method">
+        <option value="">-- 申請手段のご希望を選択 --</option>
+        <option>電話・FAX（K社が代理入力）</option>
+        <option>LINE等のメッセージアプリ</option>
+        <option>専用Webフォーム</option>
+        <option>紙の郵送</option>
+        <option>未定・複数対応希望</option>
+      </select>
+      <div style="margin-top:10px;">
+        <textarea name="b5" id="b5" placeholder="補足事項があればご記入ください…" style="min-height:70px;"></textarea>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">B-6</span>
+      <p class="question-label">K社の審査プロセス</p>
+      <ul class="sub-questions">
+        <li>小売店からの申請を「チェックする」とのことですが、何を見ますか？</li>
+        <li>OKかNGかの判断基準はありますか？</li>
+        <li>チェックにどのくらい時間がかかりますか？</li>
+      </ul>
+      <textarea name="b6" id="b6" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">B-7</span>
+      <p class="question-label">精算サイクル</p>
+      <ul class="sub-questions">
+        <li>精算はどのくらいの頻度ですか？（毎日？ 毎週？ 毎月？）</li>
+        <li>締め日と支払日のルールはありますか？</li>
+      </ul>
+      <select name="b7_cycle" id="b7_cycle">
+        <option value="">-- 精算頻度を選択 --</option>
+        <option>毎日</option>
+        <option>毎週</option>
+        <option>月1回</option>
+        <option>月2回</option>
+        <option>その他・未定</option>
+      </select>
+      <div style="margin-top:10px;">
+        <textarea name="b7" id="b7" placeholder="締め日・支払日など補足があればご記入ください…" style="min-height:70px;"></textarea>
+      </div>
+    </div>
+
+    <!-- C. 振込 -->
+    <div class="section-title">C. 振込メカニズム</div>
+
+    <div class="question-block">
+      <span class="question-id">C-1</span>
+      <p class="question-label">振込方法のご希望</p>
+      <ul class="sub-questions">
+        <li>小売店さんへの振込は、どのような方法で行いたいですか？</li>
+        <li>ご利用予定の銀行や決済サービスは決まっていますか？</li>
+        <li>振込作業はできるだけ自動化・省力化したいですか？</li>
+      </ul>
+      <textarea name="c1" id="c1" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">C-2</span>
+      <p class="question-label">振込の要件</p>
+      <ul class="sub-questions">
+        <li>K社さんの名前で振り込む、という認識で合っていますか？</li>
+        <li>1回に振り込む件数と合計金額の見込みは？</li>
+        <li>振込手数料は誰が負担しますか？（K社？ 小売店？ 利用料に含める？）</li>
+      </ul>
+      <textarea name="c2" id="c2" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <!-- D. お金まわり -->
+    <div class="section-title">D. お金まわり</div>
+
+    <div class="question-block">
+      <span class="question-id">D-1</span>
+      <p class="question-label">システム利用料</p>
+      <ul class="sub-questions">
+        <li>J社さんへ請求する「システム利用料」はどうやって計算しますか？</li>
+        <li>（立て替えた金額の○%？ 固定額？ 件数ベース？）</li>
+      </ul>
+      <textarea name="d1" id="d1" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <!-- E. 規模感 -->
+    <div class="section-title">E. 規模感・非機能要件</div>
+
+    <div class="question-block">
+      <span class="question-id">E-1</span>
+      <p class="question-label">小売店の規模</p>
+      <ul class="sub-questions">
+        <li>最初は何店舗からスタートしますか？</li>
+        <li>最終的に何店舗くらいを想定していますか？</li>
+      </ul>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+        <div>
+          <p class="note-hint">初期店舗数（目安）</p>
+          <input type="text" name="e1_start" placeholder="例：10店舗">
+        </div>
+        <div>
+          <p class="note-hint">最大想定店舗数</p>
+          <input type="text" name="e1_max" placeholder="例：2,000店舗">
+        </div>
+      </div>
+      <textarea name="e1" id="e1" placeholder="段階的な展開予定など補足があればご記入ください…" style="min-height:70px;"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">E-2</span>
+      <p class="question-label">トランザクション量</p>
+      <ul class="sub-questions">
+        <li>月にどのくらいの申請が来そうですか？</li>
+        <li>お中元やお歳暮など、特に多くなる時期はありますか？</li>
+      </ul>
+      <textarea name="e2" id="e2" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <!-- F. 臨時券 -->
+    <div class="section-title">F. 経済対策「臨時おこめ券」</div>
+
+    <div class="question-block">
+      <span class="question-id">F-1</span>
+      <p class="question-label">臨時券への対応</p>
+      <ul class="sub-questions">
+        <li>政府の経済対策で使用期限付きのお米券が配られています（期限: 2026/9/30）</li>
+        <li>このシステムは臨時券の精算も対象ですか？</li>
+        <li>通常のお米券（期限なし）と区別して管理しますか？</li>
+      </ul>
+      <select name="f1_scope" id="f1_scope">
+        <option value="">-- 対象範囲を選択 --</option>
+        <option>臨時券も対象（通常券と同じ扱い）</option>
+        <option>臨時券も対象（通常券と区別して管理）</option>
+        <option>臨時券は対象外</option>
+        <option>未定</option>
+      </select>
+      <div style="margin-top:10px;">
+        <textarea name="f1" id="f1" placeholder="補足があればご記入ください…" style="min-height:70px;"></textarea>
+      </div>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">F-2</span>
+      <p class="question-label">流通量の変化</p>
+      <ul class="sub-questions">
+        <li>臨時券で精算が急に増えることが予想されますが、どのくらい増えそうですか？</li>
+        <li>特に期限直前（2026年8〜9月）に集中する可能性があります</li>
+      </ul>
+      <textarea name="f2" id="f2" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <!-- G. その他 -->
+    <div class="section-title">G. その他</div>
+
+    <div class="question-block">
+      <span class="question-id">G-1</span>
+      <p class="question-label">既存システム・データ</p>
+      <ul class="sub-questions">
+        <li>K社さんに今使っている業務システムはありますか？</li>
+        <li>小売店さんの情報（店名・口座番号など）のリストは既にありますか？</li>
+        <li>過去の精算実績データはありますか？</li>
+      </ul>
+      <textarea name="g1" id="g1" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">G-2</span>
+      <p class="question-label">ユーザーとサポート</p>
+      <ul class="sub-questions">
+        <li>このシステムを操作するのは誰ですか？（K社の担当者？ 小売店自身？）</li>
+        <li>小売店さんからの問い合わせはK社さんが受ける想定ですか？</li>
+        <li>サポート体制は何名くらいですか？</li>
+      </ul>
+      <textarea name="g2" id="g2" placeholder="ご回答をご記入ください…"></textarea>
+    </div>
+
+    <div class="question-block">
+      <span class="question-id">その他</span>
+      <p class="question-label">補足・ご意見・ご質問</p>
+      <textarea name="other" id="other" placeholder="上記以外に伝えたいこと、ご不明な点などあればご自由にご記入ください…"></textarea>
+    </div>
+
+    <div class="submit-area">
+      <button type="submit" class="submit-btn" id="submitBtn">回答を送信する</button>
+      <div id="statusMsg" class="status-msg"></div>
+    </div>
+
+  </form>
+</div>
+
+<div class="thank-you" id="thankYou">
+  <div class="check-icon">✅</div>
+  <h2>ご回答ありがとうございました</h2>
+  <p>内容を受け取りました。担当者より改めてご連絡いたします。</p>
+</div>
+
+<script>
+// ============================================================
+// ⚙️ EmailJS 設定（GitHub Pages公開前に必ず変更してください）
+// 設定手順：
+// 1. https://www.emailjs.com/ にアクセスし、無料アカウント作成
+// 2. Email Services → Add New Service → Gmail を選択
+//    → Service ID をコピー（例: service_xxxxxxx）
+// 3. Email Templates → Create New Template
+//    → 件名: 「{{subject}}」
+//    → 本文: 「{{message}}」
+//    → Template ID をコピー（例: template_xxxxxxx）
+// 4. Account → Public Key をコピー
+// ============================================================
+const EMAILJS_PUBLIC_KEY  = "uc44B1uSud4tqE5Lx";
+const EMAILJS_SERVICE_ID  = "service_4panwf6";
+const EMAILJS_TEMPLATE_ID = "template_i5gfe2q";
+const RECIPIENT_EMAIL     = "your-email@gmail.com"; // ← あなたのGmailアドレス
+// ============================================================
+
+(function() {
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+})();
+
+// 今日の日付を自動入力
+document.getElementById('r_date').value = new Date().toLocaleDateString('ja-JP');
+
+// プログレスバー
+const textareas = document.querySelectorAll('textarea, input[type="text"], select');
+function updateProgress() {
+  let filled = 0;
+  textareas.forEach(el => { if (el.value.trim()) filled++; });
+  const pct = Math.round((filled / textareas.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+textareas.forEach(el => el.addEventListener('input', updateProgress));
+textareas.forEach(el => el.addEventListener('change', updateProgress));
+updateProgress();
+
+// フォーム送信
+document.getElementById('kartisForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('r_name').value.trim();
+  if (!name) {
+    alert('お名前をご記入ください。');
+    document.getElementById('r_name').focus();
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送信中…';
+
+  // フォームデータを集約
+  const get = id => (document.getElementById(id) ? document.getElementById(id).value.trim() : '');
+  const getByName = n => {
+    const el = document.querySelector(`[name="${n}"]`);
+    return el ? el.value.trim() : '';
+  };
+
+  const body = `
+K.A.R.T.I.S. 商談確認事項 - K社向け回答
+==========================================
+回答者: ${get('r_name')}
+会社・部署: ${get('r_company')}
+メール: ${get('r_email')}
+回答日: ${get('r_date')}
+
+A. スコープ確認
+--------------
+[A-3] J社のシステム利用:
+${get('a3') || '（未回答）'}
+
+[A-4] システムのスコープ:
+${get('a4') || '（未回答）'}
+
+B. 業務フロー詳細
+--------------
+[B-1] K社と全米販の関係:
+${get('b1') || '（未回答）'}
+
+[B-2] お米券の「ID」:
+${get('b2') || '（未回答）'}
+
+[B-3] 精算単価と券の種類:
+${get('b3') || '（未回答）'}
+
+[B-4] 二重利用防止と物理券:
+${get('b4') || '（未回答）'}
+
+[B-5] 申請手段の希望: ${getByName('b5_method') || '（未選択）'}
+${get('b5') || ''}
+
+[B-6] 審査プロセス:
+${get('b6') || '（未回答）'}
+
+[B-7] 精算サイクル: ${get('b7_cycle') || '（未選択）'}
+${get('b7') || ''}
+
+C. 振込メカニズム
+--------------
+[C-1] 振込方法のご希望:
+${get('c1') || '（未回答）'}
+
+[C-2] 振込の要件:
+${get('c2') || '（未回答）'}
+
+D. お金まわり
+--------------
+[D-1] システム利用料:
+${get('d1') || '（未回答）'}
+
+E. 規模感
+--------------
+[E-1] 初期店舗数: ${getByName('e1_start') || '未記入'} / 最大想定: ${getByName('e1_max') || '未記入'}
+${get('e1') || ''}
+
+[E-2] トランザクション量:
+${get('e2') || '（未回答）'}
+
+F. 臨時おこめ券
+--------------
+[F-1] 対象範囲: ${get('f1_scope') || '（未選択）'}
+${get('f1') || ''}
+
+[F-2] 流通量の変化:
+${get('f2') || '（未回答）'}
+
+G. その他
+--------------
+[G-1] 既存システム・データ:
+${get('g1') || '（未回答）'}
+
+[G-2] ユーザーとサポート:
+${get('g2') || '（未回答）'}
+
+[補足・ご意見]:
+${get('other') || '（なし）'}
+==========================================
+`.trim();
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    subject: `【KARTIS商談回答】${get('r_name')} 様より`,
+    message: body,
+    to_email: RECIPIENT_EMAIL,
+    reply_to: get('r_email') || RECIPIENT_EMAIL,
+    from_name: get('r_name')
+  })
+  .then(function() {
+    document.getElementById('formArea').style.display = 'none';
+    document.getElementById('thankYou').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  })
+  .catch(function(err) {
+    const msg = document.getElementById('statusMsg');
+    msg.className = 'status-msg error';
+    msg.textContent = '送信に失敗しました。ページを再読み込みして再試行してください。（エラー: ' + JSON.stringify(err) + '）';
+    btn.disabled = false;
+    btn.textContent = '回答を送信する';
+  });
+});
+</script>
+</body>
+</html>
